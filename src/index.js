@@ -29,8 +29,8 @@ io.on('connection', (socket)=>{
             return callback(error)
         }
         socket.join(user.room)
-        socket.emit('message', generateMessage('Admin', 'Welcome!'))
-        socket.broadcast.to(user.room).emit('message', generateMessage('Admin' , `${user.username} se a conectado`))
+        socket.emit('message', generateMessage('Admin Oscar', 'Bienvenido(a)!'))
+        socket.broadcast.to(user.room).emit('message', generateMessage('Admin Oscar' , `${user.username} se ha conectado`))
     io.to(user.room).emit('roomData', {
         room: user.room,
         users: getUsersInRoom(user.room)
@@ -40,18 +40,25 @@ io.on('connection', (socket)=>{
     socket.on('sendMessage', (message, callback)=>{
         const user= getUser(socket.id)
         const filter= new Filter()
-        if(filter.isProfane(message)){
-            return callback('Profanity is not allowed')
+        if(user !== undefined){
+            if(filter.isProfane(message)){
+                return callback('Profanity is not allowed')
+            }
+            io.to(user.room).emit('message', generateMessage(user.username, message))
+        } else {
+            io.emit('message', {
+                username: 'Admin',
+                text: 'Tu sesión a expirado, vuelve a iniciar sesión por favor'
+            })
         }
-        io.to(user.room).emit('message', generateMessage(user.username, message))
-       /*  io.emit('message', generateMessage()) */
+
         callback()
     })
 
     socket.on('disconnect', ()=>{
         const user= removeUser(socket.id)
         if(user){
-            io.to(user.room).emit('message', generateMessage('Admin', `${user.username} se a desconectado`)) 
+            io.to(user.room).emit('message', generateMessage('Admin Oscar', `${user.username} se ha desconectado`)) 
         io.to(user.room).emit('roomData',{
             room: user.room,
             users: getUsersInRoom(user.room)
